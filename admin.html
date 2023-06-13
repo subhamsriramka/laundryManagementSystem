@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Laundry Application</title>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <ul>
+          <li><a href="admin.html">Admin</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section id="laundryRequest">
+      <div class="container">
+        <h2>Laundry Requests</h2>
+        <button class="cta-button" onclick="fetchData()">
+          Update requests
+        </button>
+        <table id="data-table">
+          <tr>
+            <th>Email</th>
+            <th>Address</th>
+            <th>Laundry type</th>
+            <th>Number of clothes</th>
+            <th>Approve request</th>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container">
+        <p>&copy; 2023 Laundry Application. All rights reserved.</p>
+      </div>
+    </footer>
+    <script src="script.js"></script>
+  </body>
+</html>

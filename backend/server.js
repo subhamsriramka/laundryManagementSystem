@@ -17,7 +17,7 @@ mongoose
 
 // Create a laundry request schema
 const laundryRequestSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  email: { type: String, required: true },
   address: { type: String, required: true },
   laundryType: { type: String, required: true },
   laundryNumber: { type: Number, required: true },
@@ -26,12 +26,12 @@ const laundryRequestSchema = new mongoose.Schema({
 
 // Create a User schema
 const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
-  name: { type: String },
+  isAdmin: { type: Number, required: true, default: 0 },
   phone: { type: Number },
-  // status: { type: String, default: "Pending" },
 });
 
 // Create a laundry request model
@@ -53,12 +53,11 @@ app.use(bodyParser.json());
 
 // User Signup - Register
 app.post("/signup", (req, res) => {
-  console.log("i am called");
   // Retrieve user details from the request body
-  const { username, email, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
   // Create a new user document
-  const newUser = new User({ username, email, password });
+  const newUser = new User({ firstName, lastName, email, password });
 
   // Save the new user to the database
   newUser
@@ -74,7 +73,6 @@ app.post("/signup", (req, res) => {
 
 // User login - Register
 app.post("/login", (req, res) => {
-  console.log("i am called");
   // Retrieve user details from the request body
   const { email, password } = req.body;
 
@@ -84,13 +82,14 @@ app.post("/login", (req, res) => {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      console.log("i'm called" + user.password);
+
       // Validate the current password
       if (!user.password === password) {
         return res.status(401).json({ message: "Invalid current password" });
-      }
-      else {
-        return res.status(200).json({message: "Success"})
+      } else {
+        return res
+          .status(200)
+          .json({ message: "Success", isAdmin: user.isAdmin });
       }
     })
     .catch((error) => {
@@ -99,35 +98,37 @@ app.post("/login", (req, res) => {
     });
 });
 
-// Dashboard - View the status of Laundry Request and Price
-app.get("/dashboard", (req, res) => {
-  // Retrieve dashboard data from the database
-  DashboardData.findOne({}, (err, data) => {
-    if (err) {
-      console.error("Error:", err);
-      return res.status(500).json({ message: "An error occurred" });
-    }
-    if (!data) {
-      // If no data exists, return default values
-      return res.json({ laundryRequestStatus: "No data", price: 0 });
-    }
-
-    // Return response with the retrieved data
-    res.json({ laundryRequestStatus: data.status, price: data.price });
-  });
-});
-
 // Laundry Request - Submit laundry request
 app.post("/laundry-request", (req, res) => {
-  // Create a new laundry request
-  const { name, address, laundryType,laundryNumber } = req.body;
-  const newLaundryRequest = new LaundryRequest({ name, address, laundryType, laundryNumber });
+  // Extract data from the request body
+  const { email, address, laundryType, laundryNumber } = req.body;
 
-  // Save the laundry request to the database
-  newLaundryRequest
-    .save()
-    .then(() => {
-      res.json({ message: "Laundry request submitted successfully" });
+  // Find a user with the provided email in the database
+  User.findOne({ email: email })
+    .then((user) => {
+      if (user) {
+        // Create a new laundry request object
+        const newLaundryRequest = new LaundryRequest({
+          email,
+          address,
+          laundryType,
+          laundryNumber,
+        });
+
+        // User found, save the laundry request to the database
+        newLaundryRequest
+          .save()
+          .then(() => {
+            res.json({ message: "Laundry request submitted successfully" });
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            res.status(500).json({ message: "An error occurred" });
+          });
+      } else {
+        // User not found
+        res.status(404).json({ message: "User not found" });
+      }
     })
     .catch((error) => {
       console.error("Error:", error);
@@ -137,12 +138,12 @@ app.post("/laundry-request", (req, res) => {
 
 // User Profile - Update user profile
 app.put("/profile", (req, res) => {
-  const { name, email, phone } = req.body;
+  const { firstName, lastName, email, phone } = req.body;
 
   // Find the user in the database and update the profile
   User.findOneAndUpdate(
     { email: email }, // Assuming 'username' is the unique identifier for a user
-    { name: name, phone: phone },
+    { firstName: firstName, lastName: lastName, phone: phone },
     { new: true }
   )
     .then((updatedUser) => {
@@ -171,9 +172,9 @@ app.put("/password/change", (req, res) => {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      console.log("i'm called" + user.password);
+
       // Validate the current password
-      if (!user.password === currentPassword) {
+      if (!(user.password === currentPassword)) {
         return res.status(401).json({ message: "Invalid current password" });
       }
 
@@ -215,7 +216,7 @@ app.post("/password/recover", (req, res) => {
       }
 
       // Retrieve the recovered password
-      const recoveredPassword = user.password; // Assuming password is stored in the "password" field
+      const recoveredPassword = user.password;
 
       // Return the recovered password as the response
       res.json({
@@ -229,17 +230,41 @@ app.post("/password/recover", (req, res) => {
     });
 });
 
-// Notifications - Retrieve notifications
-// app.get("/notifications", (req, res) => {
-//   // Retrieve notifications from the database
-//   // ...
+//Get all laundry data
+app.get("/data", async (req, res) => {
+  try {
+    const requests = await LaundryRequest.find().sort({ _id: -1 });
+    res.json(requests);
+  } catch (error) {
+    // Handle any errors that occur during the operation
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
-//   // Return response
-//   res.json([
-//     { message: "Laundry request submitted successfully" },
-//     // { message: "Failed", timestamp: Date.now() },
-//   ]);
-// });
+// Request status - Update status
+app.put("/status", (req, res) => {
+  const { _id } = req.body;
+
+  // Find the laundry request in the database and update the status
+  LaundryRequest.findOneAndUpdate(
+    { _id: _id },
+    { status: "Approved" },
+    { new: true }
+  )
+    .then((updatedUser) => {
+      if (updatedUser) {
+        res.json({
+          message: "status updated successfully",
+        });
+      } else {
+        res.status(404).json({ message: "Request not found" });
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      res.status(500).json({ message: "An error occurred" });
+    });
+});
 
 // Start the server
 app.listen(3000, () => console.log("Server is running on port 3000"));

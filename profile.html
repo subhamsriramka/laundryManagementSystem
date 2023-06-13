@@ -13,30 +13,17 @@
         <li><a href="./dashboard.html">Dashboard</a></li>
         <li><a
         href="./profile.html">Profile</a></li>
-        <!-- <li><a href="#notifications">Notifications</a></li> -->
-        <!-- <li><a href="#laundry-request">Laundry Request</a></li> -->
-        <!-- <li><a href="#user-profile">User Profile</a></li> -->
-        <!-- <li><a href="#change-password">Change Password</a></li> -->
-        <!-- <li><a href="#recover-password">Recover Password</a></li> -->
       </ul>
     </nav>
   </header>
-
-  <!-- <section id="hero">
-    <div class="container">
-      <h1>Welcome</h1>
-      <p>Experience hassle-free laundry services</p>
-      <a href="#laundry-request" class="cta-button">Get Started</a>
-    </div>
-  </section> -->
 
   <div id="parallel">
   <section id="user-profile">
     <div class="container">
       <h2>User Profile</h2>
       <form id="profileForm" onsubmit="event.preventDefault(); updateProfile();">
-        <input type="text" id="newname" placeholder="Name" required>
-        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="newFirstName" placeholder="First Name" required>
+        <input type="text" id="newLastName" placeholder="Last Name" required>
         <input type="text" id="phone" placeholder="Phone" required>
         <button type="submit">Update Profile</button>
       </form>
@@ -47,7 +34,6 @@
     <div class="container">
       <h2>Change Password</h2>
       <form id="changePasswordForm" onsubmit="event.preventDefault(); changePassword();">
-        <input type="email" id="confirmPassword" placeholder="email" required>
         <input type="password" id="currentPassword" placeholder="Current
 Password" required>
 <input type="password" id="newPassword" placeholder="New Password" required>
